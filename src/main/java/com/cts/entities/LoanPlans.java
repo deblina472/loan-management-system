@@ -7,6 +7,8 @@ import java.util.List;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "Loan_Plans")
 public class LoanPlans {
