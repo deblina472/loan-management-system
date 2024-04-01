@@ -6,6 +6,8 @@ import java.time.LocalDate;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "Loan_Plans_History")
 public class LoanPlansHistory {
