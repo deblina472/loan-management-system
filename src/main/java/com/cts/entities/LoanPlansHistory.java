@@ -1,4 +1,4 @@
-package com.cognizant.entities;
+package com.cts.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
