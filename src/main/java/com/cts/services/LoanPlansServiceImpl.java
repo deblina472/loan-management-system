@@ -1,4 +1,4 @@
-package com.cognizant.services;
+package com.cognizant.services.classes;
 
 import com.cognizant.dto.BaseInterestRatesDTO;
 import com.cognizant.dto.LoanPlansDTO;
@@ -6,6 +6,7 @@ import com.cognizant.entities.BaseInterestRates;
 import com.cognizant.entities.LoanPlans;
 import com.cognizant.repositories.BaseInterestRatesRepository;
 import com.cognizant.repositories.LoanPlansRepository;
+import com.cognizant.services.interfaces.LoanPlansService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-
+/**
+ * @author Deblina Das
+ * This is a service class containing business logics
+ * for several operations performed by bank manager and customers
+ */
 @Data
 @Service
 public class LoanPlansServiceImpl implements LoanPlansService {
@@ -23,33 +28,57 @@ public class LoanPlansServiceImpl implements LoanPlansService {
     private LoanPlansRepository loanPlansRepository;
     @Autowired
     private BaseInterestRatesRepository baseInterestRatesRepository;
-    private BaseInterestRatesDTO baseInterestRatesDTO;
 
-/* Add new loan plan */
+    /**
+     * This method will create new loan plan
+     * @param loanPlansDTO - This method takes object of LoanPlansDTO as parameter
+     * @return - This method returns LoanPlansDTO
+     */
+
     @Override
-    public String addNewPlan(LoanPlansDTO loanPlansDTO) {
+    public LoanPlansDTO addNewPlan(LoanPlansDTO loanPlansDTO) {
 
         LoanPlans loanPlan = new LoanPlans();
         loanPlan.setPlanName(loanPlansDTO.getPlanName());
         loanPlan.setPrincipleAmount(loanPlansDTO.getPrincipleAmount());
         loanPlan.setTenure(loanPlansDTO.getTenure());
-        loanPlan.setInterestRate(loanPlansDTO.getInterestRate());
-        calculateInterestAmountAndTotalPayable(loanPlansDTO.getBaseInterestRates().getLoanType(),loanPlansDTO.getPrincipleAmount(),loanPlansDTO.getTenure(),loanPlan);
+        LoanPlansServiceImpl loanPlansServiceImpl=new LoanPlansServiceImpl();
         loanPlan.setPlanValidity(loanPlansDTO.getPlanValidity());
         loanPlan.setPlanAddedOn(loanPlansDTO.getPlanAddedOn());
-//        BaseInterestRates baseInterestRates = new BaseInterestRates();
-//        baseInterestRates.setId(loanPlansDTO.getBaseInterestRates().getId());
-//        loanPlan.setBaseInterestRates(baseInterestRates);
+        loanPlansServiceImpl.calculateInterestRateAndInterestAmountAndEMI(
+                loanPlansDTO.getBaseInterestRatesDTO().getLoanType(),
+                loanPlansDTO.getPrincipleAmount(),
+                loanPlansDTO.getTenure(),
+                loanPlan
+        );
 
+        BaseInterestRatesDTO baseInterestsRatesDTO=loanPlansDTO.getBaseInterestRatesDTO();
+        BaseInterestRates baseInterestRates=new BaseInterestRates();
+        baseInterestRates.setId(baseInterestsRatesDTO.getId());
+        baseInterestRates.setLoanType(baseInterestsRatesDTO.getLoanType());
+        baseInterestRates.setBaseInterestRate(baseInterestsRatesDTO.getBaseInterestRate());
+        baseInterestRatesRepository.save(baseInterestRates);
+
+        loanPlan.setBaseInterestRates(baseInterestRatesRepository.findById(baseInterestsRatesDTO.getId()).get());
         LoanPlans loanPlans = loanPlansRepository.save(loanPlan);
-        if (loanPlans != null)
-            return "success";
-        else
-            return "fail";
+        if(loanPlans.getPlanId()!=0){
+            loanPlansDTO.setPlanId(loanPlans.getPlanId());
+            loanPlansDTO.setStatus("success");
+        }else{
+            loanPlansDTO.setStatus("fail");
+        }
+        return loanPlansDTO;
     }
 
-    public void calculateInterestAmountAndTotalPayable(String loanType, int principleAmount, int tenure,LoanPlans loanPlans) {
-        double interestRate ;
+    /**
+     * This method calculates interest rate, interest amount and EMI and save the data into entity
+     * @param loanType - It takes loanType as first parameter
+     * @param principleAmount - It takes principleAmount as second parameter
+     * @param tenure - It takes tenure as third parameter
+     * @param loanPlans - It takes object of LoanPlans as fourth parameter
+     */
+    public void calculateInterestRateAndInterestAmountAndEMI(String loanType, int principleAmount, int tenure, LoanPlans loanPlans) {
+        double interestRate =0.0;
         double totalPayableAmount = 0.0;
         double interestAmount = 0.0;
         double emi = 0.0;
@@ -124,26 +153,43 @@ public class LoanPlansServiceImpl implements LoanPlansService {
                 }
             }
         }
-
+        loanPlans.setInterestRate((float) interestRate);
         loanPlans.setInterestAmount((int) interestAmount);
         loanPlans.setTotalPayable((int) totalPayableAmount);
         loanPlans.setEmi((float) emi);
     }
 
+    /**
+     * This method calculates total payable amount
+     * @param principleAmount - It takes principleAmount as first parameter
+     * @param year - It takes year as second parameter
+     * @param interestRate - It takes interestRate as third parameter
+     * @return - It returns total payable amount
+     */
     public double calculateTotalPayable(int principleAmount,double year,double interestRate){
         return (principleAmount * (interestRate / 100) * year) + principleAmount;
     }
 
-/**
- *  Fetch list of loan plans
- */
+
+    /**
+     * This method fetches list of loan plans
+     * @return - This method returns list of LoanPlansDTO
+     */
+
     public List<LoanPlansDTO> fetchLoanPlans() {
         Iterable<LoanPlans> loanPlansIterable = loanPlansRepository.findAll();
         Iterator<LoanPlans> loanPlansIterator = loanPlansIterable.iterator();
+        System.out.println(loanPlansIterator.hasNext());
         List<LoanPlansDTO> loanPlans = new LoanPlansServiceImpl().convertToDTOList(loanPlansIterator);
 
         return loanPlans;
     }
+
+    /**
+     * This method converts iterator of entity into dto list
+     * @param loanPlansIterator - This method takes iterator of LoanPlans as parameter
+     * @return - This method returns list of LoanPlansDTO
+     */
     private List<LoanPlansDTO> convertToDTOList(Iterator<LoanPlans> loanPlansIterator) {
         List<LoanPlansDTO> loanPlansDTOList = new ArrayList<>();
         while (loanPlansIterator.hasNext()){
@@ -160,22 +206,26 @@ public class LoanPlansServiceImpl implements LoanPlansService {
             loanPlansDTO.setEmi(loanPlans.getEmi());
             loanPlansDTO.setPlanValidity(loanPlans.getPlanValidity());
             loanPlansDTO.setPlanAddedOn(loanPlans.getPlanAddedOn());
-            loanPlansDTO.setBaseInterestRates(loanPlans.getBaseInterestRates());
+            loanPlansDTO.setBaseInterestRatesDTO(convertBaseInterest(loanPlans.getBaseInterestRates()));
 
             loanPlansDTOList.add(loanPlansDTO);
-
         }
         return loanPlansDTOList;
     }
 
-//Fetch loan plan by Id
+
+    /**
+     * This method gets loan plan by id
+     * @param planId - It is the id of loan plan taken as first parameter
+     * @return - It will return dto of loan plan
+     */
     @Override
     public LoanPlansDTO fetchLoanPlanById(int planId) {
         Optional<LoanPlans> loanPlans = loanPlansRepository.findById(planId);
 
         LoanPlansDTO loanPlansDTO = new LoanPlansDTO();
         loanPlans.ifPresent(fetchLoanPlans -> {
-
+            loanPlansDTO.setPlanId(fetchLoanPlans.getPlanId());
             loanPlansDTO.setPlanName(fetchLoanPlans.getPlanName());
             loanPlansDTO.setPrincipleAmount(fetchLoanPlans.getPrincipleAmount());
             loanPlansDTO.setTenure(fetchLoanPlans.getTenure());
@@ -185,27 +235,43 @@ public class LoanPlansServiceImpl implements LoanPlansService {
             loanPlansDTO.setEmi(fetchLoanPlans.getEmi());
             loanPlansDTO.setPlanValidity(fetchLoanPlans.getPlanValidity());
             loanPlansDTO.setPlanAddedOn(fetchLoanPlans.getPlanAddedOn());
-            loanPlansDTO.setBaseInterestRates(fetchLoanPlans.getBaseInterestRates());
+            loanPlansDTO.setBaseInterestRatesDTO(convertBaseInterest(fetchLoanPlans.getBaseInterestRates()));
         });
         return loanPlansDTO;
     }
 
-//Update loan plan by Id
-@Override
-public String updateLoanPlan(int planId, LoanPlansDTO loanPlansDTO) {
-    Optional<LoanPlans> optionalLoanPlans = loanPlansRepository.findById(loanPlansDTO.getPlanId());
-    if (optionalLoanPlans.isPresent()) {
-        LoanPlans existingLoanPlan = optionalLoanPlans.get();
-
-        existingLoanPlan.setPlanName(loanPlansDTO.getPlanName());
-        existingLoanPlan.setPlanValidity(loanPlansDTO.getPlanValidity());
-
-        loanPlansRepository.save(existingLoanPlan);
-        return "success";
+    /**
+     * This method converts object of BaseInterestRates to BaseInterestRatesDTO
+     * @param baseInterestRates - This method takes object of BaseInterestRates as parameter
+     * @return - This methood returns BaseInterestRatesDTO
+     */
+    public BaseInterestRatesDTO convertBaseInterest(BaseInterestRates baseInterestRates){
+        BaseInterestRatesDTO baseInterestRatesDTO1 = new BaseInterestRatesDTO();
+        baseInterestRatesDTO1.setId(baseInterestRates.getId());
+        baseInterestRatesDTO1.setLoanType(baseInterestRates.getLoanType());
+        baseInterestRatesDTO1.setBaseInterestRate(baseInterestRates.getBaseInterestRate());
+        return baseInterestRatesDTO1;
     }
-    return "fail";
-}
+    /**
+     * This method updates loan plan by id
+     * @param planId - It takes id of a loan plan as first parameter
+     * @param loanPlansDTO - It takes object of LoanPlansDTO as second parameter
+     * @return - It returns status of update
+     */
+    @Override
+    public String updateLoanPlan(int planId, LoanPlansDTO loanPlansDTO) {
+        Optional<LoanPlans> optionalLoanPlans = loanPlansRepository.findById(loanPlansDTO.getPlanId());
+        if (optionalLoanPlans.isPresent()) {
+            LoanPlans existingLoanPlan = optionalLoanPlans.get();
 
+            existingLoanPlan.setPlanName(loanPlansDTO.getPlanName());
+            existingLoanPlan.setPlanValidity(loanPlansDTO.getPlanValidity());
+
+            loanPlansRepository.save(existingLoanPlan);
+            return "success";
+        }
+        return "fail";
+    }
 
 
 }
