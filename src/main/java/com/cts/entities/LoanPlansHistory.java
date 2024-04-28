@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 
-
+/**
+ * @author Deblina Das
+ * This is an Entity class
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
