@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ContextConfiguration(classes = LoanPlansModuleApplication.class)
-public class BaseInterestRatesRepositoryTest {
+class BaseInterestRatesRepositoryTest {
 
     @Autowired
     private BaseInterestRatesRepository baseInterestRatesRepository;
@@ -23,7 +23,7 @@ public class BaseInterestRatesRepositoryTest {
     private TestEntityManager entityManager;
 
     @Test
-    public void testFindAllPositive() {
+    void testFindAllPositive() {
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(10);
         baseInterestRates.setLoanType("Home");
@@ -35,7 +35,7 @@ public class BaseInterestRatesRepositoryTest {
     }
 
     @Test
-    public void testFindAllNegative() {
+    void testFindAllNegative() {
         baseInterestRatesRepository.deleteAll();
         Iterable<BaseInterestRates> it = baseInterestRatesRepository.findAll();
         assertTrue(!it.iterator().hasNext());
@@ -44,7 +44,7 @@ public class BaseInterestRatesRepositoryTest {
 
 
     @Test
-    public void testFindByIdPositive() {
+    void testFindByIdPositive() {
 
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(1);
@@ -56,14 +56,14 @@ public class BaseInterestRatesRepositoryTest {
     }
 
     @Test
-    public void testFindByIdNegative() {
+    void testFindByIdNegative() {
 
         Optional<BaseInterestRates> bir = baseInterestRatesRepository.findById(89);
         assertTrue(!bir.isPresent());
     }
 
     @Test
-    public void testSavePositive() {
+    void testSavePositive() {
 
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(1);
@@ -75,7 +75,7 @@ public class BaseInterestRatesRepositoryTest {
     }
 
     @Test
-    public void testDeletePositive() {
+    void testDeletePositive() {
 
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(1);
