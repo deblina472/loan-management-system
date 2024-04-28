@@ -11,7 +11,7 @@
     <groupId>com.cognizant</groupId>
     <artifactId>loan-plans</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>LoanPlansModule</name>
+    <name>loan-plans</name>
     <description>Demo project for Spring Boot</description>
     <properties>
         <java.version>17</java.version>
@@ -28,6 +28,27 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>jersey-apache-client4</artifactId>
+            <version>1.19.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,8 +79,32 @@
             <type>pom</type>
         </dependency>
 
+<!--       <dependency>-->
+<!--          <groupId>org.springframework.cloud</groupId>-->
+<!--          <artifactId>spring-cloud-starter</artifactId>-->
+<!--           <version>4.0.0</version>-->
+<!--       </dependency>-->
+
+<!--       <dependency>-->
+<!--          <groupId>org.springframework.cloud</groupId>-->
+<!--          <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>-->
+<!--       </dependency>-->
+
+
 
     </dependencies>
+
+<!--        <dependencyManagement>-->
+<!--           <dependencies>-->
+<!--              <dependency>-->
+<!--                 <groupId>org.springframework.cloud</groupId>-->
+<!--                 <artifactId>spring-cloud-starter-parent</artifactId>-->
+<!--                 <version>2023.0.0</version>-->
+<!--                 <type>pom</type>-->
+<!--                 <scope>import</scope>-->
+<!--              </dependency>-->
+<!--           </dependencies>-->
+<!--        </dependencyManagement>-->
 
     <build>
         <plugins>
