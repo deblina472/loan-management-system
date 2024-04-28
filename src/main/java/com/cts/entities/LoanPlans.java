@@ -5,7 +5,10 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.util.List;
 
-
+/**
+ * @author Deblina Das
+ * This is an Entity class
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
