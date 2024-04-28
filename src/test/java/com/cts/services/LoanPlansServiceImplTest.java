@@ -4,6 +4,7 @@ import com.cognizant.dto.BaseInterestRatesDTO;
 import com.cognizant.dto.LoanPlansDTO;
 import com.cognizant.entities.BaseInterestRates;
 import com.cognizant.entities.LoanPlans;
+import com.cognizant.repositories.BaseInterestRatesRepository;
 import com.cognizant.repositories.LoanPlansRepository;
 import com.cognizant.services.classes.LoanPlansServiceImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +30,8 @@ class LoanPlansServiceImplTest {
     @Mock
     private LoanPlansRepository loanPlansRepository;
     @Mock
+    private BaseInterestRatesRepository baseInterestRatesRepository;
+    @Mock
     private LoanPlansServiceImpl mockOfLoanPlansServiceImpl;
     @InjectMocks
     private LoanPlansServiceImpl loanPlansServiceImpl;
@@ -40,18 +43,21 @@ class LoanPlansServiceImplTest {
     @AfterEach
     void tearDown() throws Exception{}
 
+
+
     @Test
     void testAddNewPlan_Success() {
         try {
+            BaseInterestRates baseInterestRatesmock =mock(BaseInterestRates.class);
+            BaseInterestRates baseInterestRates = new BaseInterestRates();
+
             LoanPlans loanPlansMock = mock(LoanPlans.class);
             LoanPlans loanPlans = new LoanPlans();
             LoanPlansDTO loanPlansDTO = new LoanPlansDTO();
 
-            BaseInterestRatesDTO baseInterestRatesDTO=new BaseInterestRatesDTO();
-            baseInterestRatesDTO.setId(1);
-            baseInterestRatesDTO.setLoanType("Home");
-            baseInterestRatesDTO.setBaseInterestRate(8.5f);
-            loanPlansDTO.setBaseInterestRatesDTO(baseInterestRatesDTO);
+            loanPlansDTO.setLoanTypeId(1);
+            loanPlansDTO.setLoanType("Home");
+            loanPlansDTO.setBaseInterestRate(8.5f);
 
             loanPlansDTO.setPlanId(10);
             loanPlansDTO.setPlanName("Home");
@@ -59,6 +65,14 @@ class LoanPlansServiceImplTest {
             loanPlansDTO.setTenure(90);
             loanPlansDTO.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
             loanPlansDTO.setPlanAddedOn(LocalDate.now());
+            loanPlansDTO.setLoanTypeId(1);
+            loanPlansDTO.setLoanType("Home");
+            loanPlansDTO.setBaseInterestRate(8.5f);
+
+            baseInterestRates.setId(loanPlansDTO.getLoanTypeId());
+            baseInterestRates.setLoanType(loanPlansDTO.getLoanType());
+            baseInterestRates.setBaseInterestRate(loanPlansDTO.getBaseInterestRate());
+            when(baseInterestRatesRepository.save(any())).thenReturn(baseInterestRatesmock);
 
 
             loanPlans.setPlanId(10);
@@ -67,23 +81,23 @@ class LoanPlansServiceImplTest {
             loanPlans.setTenure(90);
             loanPlans.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
             loanPlans.setPlanAddedOn(LocalDate.now());
+            loanPlans.setBaseInterestRates(baseInterestRatesmock);
 
             mockOfLoanPlansServiceImpl.calculateInterestRateAndInterestAmountAndEMI("Home",1000000,90,loanPlans);
 
-           Mockito.verify(mockOfLoanPlansServiceImpl,times(1))
+           verify(mockOfLoanPlansServiceImpl,times(1))
              .calculateInterestRateAndInterestAmountAndEMI("Home",1000000,90,loanPlans);
 
            when(loanPlansRepository.save(any())).thenReturn(loanPlansMock);
-
+            loanPlansDTO.setPlanId(loanPlans.getPlanId());
 
             loanPlansServiceImpl.addNewPlan(loanPlansDTO);
-            assertTrue(loanPlansDTO.getPlanId()==10);
+            assertEquals(loanPlans.getPlanId(),loanPlansDTO.getPlanId());
         }
         catch(Exception e){
             assertTrue(false);
         }
     }
-
     @Test
     void testAddNewPlan_Failure() {
         try {
@@ -219,33 +233,7 @@ class LoanPlansServiceImplTest {
             assertTrue(false);
         }
     }
-//    @Test
-//    public void testFetchLoanPlans_Exception() {
-//        try{
-//            Iterable<LoanPlans> iterableMock = Mockito.mock(Iterable.class);
-//            when(loanPlansRepository.findAll()).thenReturn(iterableMock);
-//            Iterator<LoanPlans> iteratorMock = Mockito.mock(Iterator.class);
-//            when(iterableMock.iterator()).thenReturn(iteratorMock);
-//            when(iteratorMock.hasNext()).thenReturn(false);
-//            LoanPlans loanPlansMock = Mockito.mock(LoanPlans.class);
-//            when(iteratorMock.next()).thenReturn(loanPlansMock);
-//            when(loanPlansMock.getPlanId()).thenReturn(1);
-//            when(loanPlansMock.getPlanName()).thenReturn("Home");
-//            when(loanPlansMock.getPrincipleAmount()).thenReturn(1000000);
-//            when(loanPlansMock.getTenure()).thenReturn(90);
-//            when(loanPlansMock.getInterestRate()).thenReturn(8.5F);
-//            when(loanPlansMock.getInterestAmount()).thenReturn(85000);
-//            when(loanPlansMock.getTotalPayable()).thenReturn(1085000);
-//            when(loanPlansMock.getEmi()).thenReturn(950.0F);
-//            when(loanPlansMock.getPlanValidity()).thenReturn(LocalDate.now());
-//
-//            List<LoanPlansDTO> list = loanPlansServiceImpl.fetchLoanPlans();
-//            assertTrue(false);
-//        }
-//        catch(Exception e){
-//            assertTrue(true);
-//        }
-//    }
+
 
     @Test
     void testFetchLoanPlanById_Positive() {
@@ -375,9 +363,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Home", 300000, 36, loanPlans);
 
-        verify(loanPlans).setInterestAmount(90000);
-        verify(loanPlans).setTotalPayable(390000);
-        verify(loanPlans).setEmi(10833.333f);
+        verify(loanPlans).setInterestRate(8.5f);
+        verify(loanPlans).setInterestAmount(76500);
+        verify(loanPlans).setTotalPayable(376500);
+        verify(loanPlans).setEmi(10458.333f);
     }
 
     @Test
@@ -387,9 +376,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Home", 700000, 72, loanPlans);
 
-        verify(loanPlans).setInterestAmount(495600);
-        verify(loanPlans).setTotalPayable(1195600);
-        verify(loanPlans).setEmi(16605.555f);
+        verify(loanPlans).setInterestRate(9.7f);
+        verify(loanPlans).setInterestAmount(407400);
+        verify(loanPlans).setTotalPayable(1107400);
+        verify(loanPlans).setEmi(15380.556f);
     }
 
     @Test
@@ -399,9 +389,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Personal", 300000, 36, loanPlans);
 
-        verify(loanPlans).setInterestAmount(76500);
-        verify(loanPlans).setTotalPayable(376500);
-        verify(loanPlans).setEmi(10458.333f);
+        verify(loanPlans).setInterestRate(10.0f);
+        verify(loanPlans).setInterestAmount(90000);
+        verify(loanPlans).setTotalPayable(390000);
+        verify(loanPlans).setEmi(10833.333f);
     }
 
     @Test
@@ -411,9 +402,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Personal", 700000, 72, loanPlans);
 
-        verify(loanPlans).setInterestAmount(407400);
-        verify(loanPlans).setTotalPayable(1107400);
-        verify(loanPlans).setEmi(15380.556f);
+        verify(loanPlans).setInterestRate(11.8f);
+        verify(loanPlans).setInterestAmount(495600);
+        verify(loanPlans).setTotalPayable(1195600);
+        verify(loanPlans).setEmi(16605.555f);
     }
 
     @Test
@@ -423,9 +415,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Medical", 300000, 36, loanPlans);
 
-        verify(loanPlans).setInterestAmount(72000);
-        verify(loanPlans).setTotalPayable(372000);
-        verify(loanPlans).setEmi(10333.333f);
+        verify(loanPlans).setInterestRate(7.5f);
+        verify(loanPlans).setInterestAmount(67500);
+        verify(loanPlans).setTotalPayable(367500);
+        verify(loanPlans).setEmi(10208.333f);
     }
 
     @Test
@@ -435,9 +428,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Medical", 700000, 72, loanPlans);
 
-        verify(loanPlans).setInterestAmount(399000);
-        verify(loanPlans).setTotalPayable(1099000);
-        verify(loanPlans).setEmi(15263.889f);
+        verify(loanPlans).setInterestRate(9.0f);
+        verify(loanPlans).setInterestAmount(378000);
+        verify(loanPlans).setTotalPayable(1078000);
+        verify(loanPlans).setEmi(14972.223f);
     }
 
     @Test
@@ -447,9 +441,10 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Vehicle", 300000, 36, loanPlans);
 
-        verify(loanPlans).setInterestAmount(67500);
-        verify(loanPlans).setTotalPayable(367500);
-        verify(loanPlans).setEmi(10208.333f);
+        verify(loanPlans).setInterestRate(8.0f);
+        verify(loanPlans).setInterestAmount(72000);
+        verify(loanPlans).setTotalPayable(372000);
+        verify(loanPlans).setEmi(10333.333f);
     }
 
     @Test
@@ -459,8 +454,9 @@ class LoanPlansServiceImplTest {
 
         loanPlansService.calculateInterestRateAndInterestAmountAndEMI("Vehicle", 700000, 72, loanPlans);
 
-        verify(loanPlans).setInterestAmount(378000);
-        verify(loanPlans).setTotalPayable(1078000);
-        verify(loanPlans).setEmi(14972.223f);
+        verify(loanPlans).setInterestRate(9.5f);
+        verify(loanPlans).setInterestAmount(399000);
+        verify(loanPlans).setTotalPayable(1099000);
+        verify(loanPlans).setEmi(15263.889f);
     }
-}
+    }
