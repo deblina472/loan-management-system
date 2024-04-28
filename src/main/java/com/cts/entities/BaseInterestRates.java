@@ -7,7 +7,10 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-
+/**
+ * @author Deblina Das
+ * This is an Entity class
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
