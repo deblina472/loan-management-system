@@ -1,7 +1,7 @@
 package com.cognizant.controller;
 
 import com.cognizant.dto.LoanPlansDTO;
-import com.cognizant.services.interfaces.LoanPlansService;
+import com.cognizant.services.classes.LoanPlansServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,17 +19,18 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 public class LoanPlansController {
     @Autowired
-    private LoanPlansService loanPlansService;
+    private LoanPlansServiceImpl loanPlansService;
 
     /**
-     *
+     *End point for adding new loan plan
      * @param loanPlansDTO
      * @return
      */
-    @PostMapping("/loanplans")
+    @PostMapping("/addloanplans")
     public ResponseEntity<?> insertNewPlan(@Valid @RequestBody LoanPlansDTO loanPlansDTO){
+
         loanPlansService.addNewPlan(loanPlansDTO);
-        if(loanPlansDTO.getStatus().equals("success")){
+        if(loanPlansDTO.getPlanId()!=0){
             return new ResponseEntity<>(HttpStatus.CREATED);
         }
         else{
@@ -37,6 +38,10 @@ public class LoanPlansController {
         }
     }
 
+    /**
+     * End point to get all loan plans available
+     * @return response of list of loan plans
+     */
     @GetMapping("/loanplans")
     public ResponseEntity<?> handleGetLoanPlan(){
         List<LoanPlansDTO> responseList = loanPlansService.fetchLoanPlans();
@@ -50,6 +55,11 @@ public class LoanPlansController {
         return responseEntity;
     }
 
+    /**
+     * End point for getting loan plan
+     * @param planId
+     * @return response of loan plan getting by Id
+     */
     @GetMapping("loanplans/{planId}")
     public ResponseEntity<?> handleGetLoanPlanById(@PathVariable("planId") int planId){
         LoanPlansDTO response = loanPlansService.fetchLoanPlanById(planId);
@@ -58,11 +68,18 @@ public class LoanPlansController {
             responseEntity = new ResponseEntity<LoanPlansDTO>(response,HttpStatus.OK);
         }
         else{
-            responseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return responseEntity;
     }
-    @PutMapping("loanplans/{planId}")
+
+    /**
+     * End point for updating loan plan
+     * @param planId
+     * @param loanPlansDTO
+     * @return response status
+     */
+    @PutMapping("updateloanplans/{planId}")
     public ResponseEntity<?> handleUpdateLoanPlan(@PathVariable("planId") int planId, @RequestBody LoanPlansDTO loanPlansDTO){
         String response = loanPlansService.updateLoanPlan(planId,loanPlansDTO);
         if(response.equals("success")){
@@ -72,5 +89,7 @@ public class LoanPlansController {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
         }
     }
+
+
 
 }
