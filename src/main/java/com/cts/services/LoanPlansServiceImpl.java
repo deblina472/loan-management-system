@@ -1,6 +1,5 @@
 package com.cognizant.services.classes;
 
-import com.cognizant.dto.BaseInterestRatesDTO;
 import com.cognizant.dto.LoanPlansDTO;
 import com.cognizant.entities.BaseInterestRates;
 import com.cognizant.entities.LoanPlans;
@@ -8,9 +7,11 @@ import com.cognizant.repositories.BaseInterestRatesRepository;
 import com.cognizant.repositories.LoanPlansRepository;
 import com.cognizant.services.interfaces.LoanPlansService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Optional;
  */
 @Data
 @Service
+@Slf4j
 public class LoanPlansServiceImpl implements LoanPlansService {
     @Autowired
     private LoanPlansRepository loanPlansRepository;
@@ -34,9 +36,12 @@ public class LoanPlansServiceImpl implements LoanPlansService {
      * @param loanPlansDTO - This method takes object of LoanPlansDTO as parameter
      * @return - This method returns LoanPlansDTO
      */
-
     @Override
     public LoanPlansDTO addNewPlan(LoanPlansDTO loanPlansDTO) {
+        BaseInterestRates baseInterestRates=new BaseInterestRates();
+        baseInterestRates.setId(loanPlansDTO.getLoanTypeId());
+        baseInterestRates.setLoanType(loanPlansDTO.getLoanType());
+        baseInterestRates.setBaseInterestRate(loanPlansDTO.getBaseInterestRate());
 
         LoanPlans loanPlan = new LoanPlans();
         loanPlan.setPlanName(loanPlansDTO.getPlanName());
@@ -44,30 +49,25 @@ public class LoanPlansServiceImpl implements LoanPlansService {
         loanPlan.setTenure(loanPlansDTO.getTenure());
         LoanPlansServiceImpl loanPlansServiceImpl=new LoanPlansServiceImpl();
         loanPlan.setPlanValidity(loanPlansDTO.getPlanValidity());
-        loanPlan.setPlanAddedOn(loanPlansDTO.getPlanAddedOn());
+        loanPlan.setPlanAddedOn(LocalDate.now());
         loanPlansServiceImpl.calculateInterestRateAndInterestAmountAndEMI(
-                loanPlansDTO.getBaseInterestRatesDTO().getLoanType(),
+                loanPlansDTO.getLoanType(),
                 loanPlansDTO.getPrincipleAmount(),
                 loanPlansDTO.getTenure(),
                 loanPlan
         );
 
-        BaseInterestRatesDTO baseInterestsRatesDTO=loanPlansDTO.getBaseInterestRatesDTO();
-        BaseInterestRates baseInterestRates=new BaseInterestRates();
-        baseInterestRates.setId(baseInterestsRatesDTO.getId());
-        baseInterestRates.setLoanType(baseInterestsRatesDTO.getLoanType());
-        baseInterestRates.setBaseInterestRate(baseInterestsRatesDTO.getBaseInterestRate());
-        baseInterestRatesRepository.save(baseInterestRates);
-
-        loanPlan.setBaseInterestRates(baseInterestRatesRepository.findById(baseInterestsRatesDTO.getId()).get());
+        Optional<BaseInterestRates> optionalOfBaseInterestRates = baseInterestRatesRepository.findById(loanPlansDTO.getLoanTypeId());
+        if(optionalOfBaseInterestRates.isPresent()){
+            loanPlan.setBaseInterestRates(optionalOfBaseInterestRates.get());
+        }
         LoanPlans loanPlans = loanPlansRepository.save(loanPlan);
         if(loanPlans.getPlanId()!=0){
             loanPlansDTO.setPlanId(loanPlans.getPlanId());
-            loanPlansDTO.setStatus("success");
-        }else{
-            loanPlansDTO.setStatus("fail");
         }
+
         return loanPlansDTO;
+
     }
 
     /**
@@ -85,33 +85,29 @@ public class LoanPlansServiceImpl implements LoanPlansService {
         double year = tenure / 12;
         if (principleAmount <= 500000 && year <= 5) {
             switch (loanType) {
-                case "Personal" -> {
+                case "Home" -> {
                     interestRate = 8.5;
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Home" -> {
+                case "Personal" -> {
                     interestRate = 10;
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Vehicle" -> {
+                case "Medical" -> {
                     interestRate = 7.5F;
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Medical" -> {
+                case "Vehicle" -> {
                     interestRate = 8.0F;
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
                 default -> {
                     break;
@@ -120,33 +116,29 @@ public class LoanPlansServiceImpl implements LoanPlansService {
         }
         if (principleAmount > 500000 && principleAmount <= 10000000 && year > 5 && year <= 30) {
             switch (loanType) {
-                case "Personal" -> {
+                case "Home" -> {
                     interestRate = 8.5 + (0.2 * year);
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Home" -> {
+                case "Personal" -> {
                     interestRate = 10 + (0.3 * year);
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Vehicle" -> {
+                case "Medical" -> {
                     interestRate = 7.5 + (0.25 * year);
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
-                case "Medical" -> {
+                case "Vehicle" -> {
                     interestRate = 8 + (0.25 * year);
                     totalPayableAmount = calculateTotalPayable(principleAmount, year, interestRate);
                     interestAmount = totalPayableAmount - principleAmount;
                     emi = totalPayableAmount / tenure;
-                    break;
                 }
                 default -> {
                     break;
@@ -179,7 +171,6 @@ public class LoanPlansServiceImpl implements LoanPlansService {
     public List<LoanPlansDTO> fetchLoanPlans() {
         Iterable<LoanPlans> loanPlansIterable = loanPlansRepository.findAll();
         Iterator<LoanPlans> loanPlansIterator = loanPlansIterable.iterator();
-        System.out.println(loanPlansIterator.hasNext());
         List<LoanPlansDTO> loanPlans = new LoanPlansServiceImpl().convertToDTOList(loanPlansIterator);
 
         return loanPlans;
@@ -206,7 +197,10 @@ public class LoanPlansServiceImpl implements LoanPlansService {
             loanPlansDTO.setEmi(loanPlans.getEmi());
             loanPlansDTO.setPlanValidity(loanPlans.getPlanValidity());
             loanPlansDTO.setPlanAddedOn(loanPlans.getPlanAddedOn());
-            loanPlansDTO.setBaseInterestRatesDTO(convertBaseInterest(loanPlans.getBaseInterestRates()));
+            loanPlansDTO.setLoanTypeId(loanPlans.getBaseInterestRates().getId());
+            loanPlansDTO.setLoanType(loanPlans.getBaseInterestRates().getLoanType());
+            loanPlansDTO.setBaseInterestRate(loanPlans.getBaseInterestRates().getBaseInterestRate());
+
 
             loanPlansDTOList.add(loanPlansDTO);
         }
@@ -235,23 +229,14 @@ public class LoanPlansServiceImpl implements LoanPlansService {
             loanPlansDTO.setEmi(fetchLoanPlans.getEmi());
             loanPlansDTO.setPlanValidity(fetchLoanPlans.getPlanValidity());
             loanPlansDTO.setPlanAddedOn(fetchLoanPlans.getPlanAddedOn());
-            loanPlansDTO.setBaseInterestRatesDTO(convertBaseInterest(fetchLoanPlans.getBaseInterestRates()));
+            loanPlansDTO.setLoanTypeId(fetchLoanPlans.getBaseInterestRates().getId());
+            loanPlansDTO.setLoanType(fetchLoanPlans.getBaseInterestRates().getLoanType());
+            loanPlansDTO.setBaseInterestRate(fetchLoanPlans.getBaseInterestRates().getBaseInterestRate());
         });
         return loanPlansDTO;
     }
 
-    /**
-     * This method converts object of BaseInterestRates to BaseInterestRatesDTO
-     * @param baseInterestRates - This method takes object of BaseInterestRates as parameter
-     * @return - This methood returns BaseInterestRatesDTO
-     */
-    public BaseInterestRatesDTO convertBaseInterest(BaseInterestRates baseInterestRates){
-        BaseInterestRatesDTO baseInterestRatesDTO1 = new BaseInterestRatesDTO();
-        baseInterestRatesDTO1.setId(baseInterestRates.getId());
-        baseInterestRatesDTO1.setLoanType(baseInterestRates.getLoanType());
-        baseInterestRatesDTO1.setBaseInterestRate(baseInterestRates.getBaseInterestRate());
-        return baseInterestRatesDTO1;
-    }
+
     /**
      * This method updates loan plan by id
      * @param planId - It takes id of a loan plan as first parameter
@@ -272,6 +257,8 @@ public class LoanPlansServiceImpl implements LoanPlansService {
         }
         return "fail";
     }
+
+
 
 
 }
