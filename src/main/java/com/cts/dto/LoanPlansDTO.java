@@ -1,11 +1,10 @@
 package com.cognizant.dto;
 
 
-import com.cognizant.entities.BaseInterestRates;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -36,7 +35,11 @@ public class LoanPlansDTO {
     private LocalDate planValidity;
     private LocalDate planAddedOn = LocalDate.now();
 
-    private BaseInterestRates baseInterestRates;
-//    private int loanTypeId;
+    private int loanTypeId;
+    private String loanType;
+    private float baseInterestRate;
 
+//    private BaseInterestRatesDTO baseInterestRatesDTO;
+
+//    private String status;
 }
