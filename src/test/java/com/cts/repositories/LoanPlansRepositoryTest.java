@@ -3,6 +3,8 @@ package com.cognizant.repository;
 import com.cognizant.LoanPlansModuleApplication;
 import com.cognizant.entities.BaseInterestRates;
 import com.cognizant.entities.LoanPlans;
+import com.cognizant.entities.LoanPlansHistory;
+import com.cognizant.repositories.LoanPlansHistoryRepository;
 import com.cognizant.repositories.LoanPlansRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ContextConfiguration(classes = LoanPlansModuleApplication.class)
-public class LoanPlansRepositoryTest {
+class LoanPlansHistoryRepositoryTest {
+    @Autowired
+    private LoanPlansHistoryRepository loanPlansHistoryRepository;
     @Autowired
     private LoanPlansRepository loanPlansRepository;
     @Autowired
@@ -26,6 +30,7 @@ public class LoanPlansRepositoryTest {
 
     @Test
     void testFindAllPositive() {
+
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(10);
         baseInterestRates.setLoanType("Home");
@@ -34,32 +39,42 @@ public class LoanPlansRepositoryTest {
         BaseInterestRates findBaseInterestRates = entityManager.find(BaseInterestRates.class,10);
 
         LoanPlans loanPlans = new LoanPlans();
-        loanPlans.setPlanName("Home Loan");
+        loanPlans.setPlanName("Home Lone");
         loanPlans.setPrincipleAmount(300000);
-        loanPlans.setTenure(36);
+        loanPlans.setTenure(10);
         loanPlans.setInterestRate(8.5f);
-        loanPlans.setInterestAmount(76500);
-        loanPlans.setTotalPayable(376500);
-        loanPlans.setEmi(10458.333f);
-        loanPlans.setPlanValidity(LocalDate.now());
+        loanPlans.setInterestAmount(50000);
+        loanPlans.setTotalPayable(350000);
+        loanPlans.setEmi(4000);
+        loanPlans.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
         loanPlans.setPlanAddedOn(LocalDate.now());
         loanPlans.setBaseInterestRates(findBaseInterestRates);
         entityManager.persist(loanPlans);
-        Iterable<LoanPlans> iterableLoanPlans = loanPlansRepository.findAll();
-        assertTrue(iterableLoanPlans.iterator().hasNext());
+        Optional<LoanPlans> optionalLoanPlans = loanPlansRepository.findById(loanPlans.getPlanId());
+
+        if(optionalLoanPlans.isPresent()){
+            LoanPlansHistory loanPlansHistory = new LoanPlansHistory();
+                loanPlansHistory.setUpdatedDate(LocalDate.now());
+                loanPlansHistory.setLoanPlans(optionalLoanPlans.get());
+            entityManager.persist(loanPlansHistory);
+        }
+
+        Iterable<LoanPlansHistory> iterableLoanPlanHistory = loanPlansHistoryRepository.findAll();
+        assertTrue(iterableLoanPlanHistory.iterator().hasNext());
 
     }
 
     @Test
     void testFindAllNegative() {
-        Iterable<LoanPlans> it = loanPlansRepository.findAll();
-        assertTrue(!it.iterator().hasNext());
+        Iterable<LoanPlansHistory> iterableLoanPlanHistory = loanPlansHistoryRepository.findAll();
+        assertTrue(!iterableLoanPlanHistory.iterator().hasNext());
 
     }
 
 
     @Test
     void testFindByIdPositive() {
+
         BaseInterestRates baseInterestRates = new BaseInterestRates();
         baseInterestRates.setId(20);
         baseInterestRates.setLoanType("Home");
@@ -78,18 +93,27 @@ public class LoanPlansRepositoryTest {
         loanPlans.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
         loanPlans.setPlanAddedOn(LocalDate.now());
         loanPlans.setBaseInterestRates(findBaseInterestRates);
-
         entityManager.persist(loanPlans);
         Optional<LoanPlans> optionalLoanPlans = loanPlansRepository.findById(loanPlans.getPlanId());
-        assertTrue(optionalLoanPlans.isPresent());
+        LoanPlansHistory loanPlansHistory = new LoanPlansHistory();
+
+        if(optionalLoanPlans.isPresent()) {
+
+            loanPlansHistory.setUpdatedDate(LocalDate.now());
+            loanPlansHistory.setLoanPlans(optionalLoanPlans.get());
+
+            entityManager.persist(loanPlansHistory);
+        }
+        Optional<LoanPlansHistory> optionalLoanPlansHistory = loanPlansHistoryRepository.findById(loanPlansHistory.getId());
+        assertTrue(optionalLoanPlansHistory.isPresent());
 
     }
 
     @Test
     void testFindByIdNegative() {
 
-        Optional<LoanPlans> lp = loanPlansRepository.findById(1);
-        assertTrue(!lp.isPresent());
+        Optional<LoanPlansHistory> lph = loanPlansHistoryRepository.findById(1);
+        assertTrue(!lph.isPresent());
     }
 
     @Test
@@ -112,29 +136,29 @@ public class LoanPlansRepositoryTest {
         loanPlans.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
         loanPlans.setPlanAddedOn(LocalDate.now());
         loanPlans.setBaseInterestRates(findBaseInterestRates);
+        entityManager.persist(loanPlans);
+        Optional<LoanPlans> optionalLoanPlans = loanPlansRepository.findById(loanPlans.getPlanId());
 
-        loanPlansRepository.save(loanPlans);
-        Optional<LoanPlans> lp = loanPlansRepository.findById(loanPlans.getPlanId());
-        assertTrue(lp.isPresent());
+        LoanPlansHistory loanPlansHistory = new LoanPlansHistory();
+        if(optionalLoanPlans.isPresent()) {
+            loanPlansHistory.setUpdatedDate(LocalDate.now());
+            loanPlansHistory.setLoanPlans(optionalLoanPlans.get());
+
+            loanPlansHistoryRepository.save(loanPlansHistory);
+        }
+        Optional<LoanPlansHistory> optionalLoanPlansHistory = loanPlansHistoryRepository.findById(loanPlansHistory.getId());
+        assertTrue(optionalLoanPlansHistory.isPresent());
     }
 
     @Test
     void testDeletePositive() {
 
-        LoanPlans loanPlans = new LoanPlans();
-        loanPlans.setPlanId(1);
-        loanPlans.setPlanName("Home Lone");
-        loanPlans.setPrincipleAmount(300000);
-        loanPlans.setTenure(10);
-        loanPlans.setInterestRate(8.5f);
-        loanPlans.setInterestAmount(50000);
-        loanPlans.setTotalPayable(350000);
-        loanPlans.setEmi(4000);
-        loanPlans.setPlanValidity(LocalDate.of(2026, Month.APRIL,12));
-        loanPlans.setPlanAddedOn(LocalDate.now());
-        loanPlansRepository.delete(loanPlans);
-        Optional<LoanPlans> lp = loanPlansRepository.findById(1);
-        assertTrue(!lp.isPresent());
+        LoanPlansHistory loanPlansHistory = new LoanPlansHistory();
+        loanPlansHistory.setId(1);
+        loanPlansHistory.setUpdatedDate(LocalDate.now());
+        loanPlansHistoryRepository.delete(loanPlansHistory);
+        Optional<LoanPlansHistory> lph = loanPlansHistoryRepository.findById(1);
+        assertTrue(!lph.isPresent());
 
     }
 
